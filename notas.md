@@ -13,21 +13,21 @@ Big Data Sesión 2: <https://drive.google.com/file/d/1ZxGfeViytrIn1ev_AlBoRM0k7k
 
 ## Arrancar KUDU
 
-Establecer variable de entorno en Powershell => $env:KUDU_QUICKSTART_IP=10.144.10.153
-Establecer variable de entorno en CMD => set KUDU_QUICKSTART_IP=10.144.10.153
-docker-compose -f docker/quickstart.yml up -d
+Establecer variable de entorno en Powershell => `$env:KUDU_QUICKSTART_IP="10.144.10.153"`
+Establecer variable de entorno en CMD => `set KUDU_QUICKSTART_IP=10.144.10.153`
+`docker-compose -f docker/quickstart.yml up -d`
 <http://localhost:8050/>
 
 ## Contenedor Impala
 
-docker run -d --name kudu-impala --network="docker_default" -p 21000:21000 -p 21050:21050 -p 25000:25000 -p 25010:25010 -p 25020:25020 --memory=4096m apache/kudu:impala-latest impala
-docker exec -it kudu-impala impala-shell
+`docker run -d --name kudu-impala --network="docker_default" -p 21000:21000 -p 21050:21050 -p 25000:25000 -p 25010:25010 -p 25020:25020 --memory=4096m apache/kudu:impala-latest impala`
+`docker exec -it kudu-impala impala-shell`
 Si el comando anterior nos deja la consola desconectada hay que ejecutar el commando `connect;`
 
 Comando para ver las Bases de Datos: `show databases;`
 Comando para ver las tablas en la BBDD: `show tables;`
 
-Creación de una tabla desde Impala:
+### Creación de una tabla desde Impala
 
 ```SQL
 CREATE TABLE primeratabla
@@ -38,4 +38,54 @@ CREATE TABLE primeratabla
 )
 PARTITION BY HASH PARTITIONS 4
 STORED AS KUDU;
+```
+
+### Insercción de datos
+
+```SQL
+INSERT INTO primeratabla VALUES (1,"juan");
+INSERT INTO primeratabla VALUES (2,"maria"), (3,"javier"), (4,"alberto");
+```
+
+### Selección de datos
+
+```SQL
+SELECT * from primeratabla;
+```
+
+### Update
+
+```SQL
+UPDATE primeratabla SET name="pedro" WHERE id=2;
+```
+
+### Insert + Update
+
+```SQL
+UPSERT INTO primeratabla VALUES (2,"marta"), (5,"raul");
+```
+
+### Borrado
+
+```SQL
+DELETE FROM primeratabla WHERE id>3;
+```
+
+Creación de una tabla externa linkada a otra tabla
+
+```SQL
+CREATE EXTERNAL TABLE segundatabla STORED AS KUDU
+TBLPROPERTIES('kudu.table_name' = 'impala::default.primeratabla');
+```
+
+### Descripción de los campos de una tabla
+
+```SQL
+describe primeratabla;
+```
+
+### Borrado de tablas
+
+```SQL
+drop table primeratabla;
 ```
