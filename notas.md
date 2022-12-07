@@ -143,7 +143,11 @@ PARTITIONS 4 STORED AS KUDU;
 INSERT INTO kudu_user_ratings SELECT movieid, userid, rating, age,gender, occupation, zip, movietitle, releasedate, videoreleasedate, url, ts FROM user_item_ratings;
 
 CREATE TABLE kudu_user_ratings_as_select PRIMARY KEY(movieid,userid) PARTITION BY HASH(movieid) PARTITIONS 4 STORED AS KUDU AS SELECT movieid, userid, rating, age, gender, occupation, zip, movietitle, releasedate, videoreleasedate, url, ts  FROM user_item_ratings;
+```
 
+### Consultas
+
+```SQL
 SELECT userid, minimum_rating, maximum_rating, total 
 FROM (    
     SELECT userid AS user, 
@@ -159,6 +163,10 @@ FROM (
         GROUP BY        userid    ) AS totalratings 
     ON    minmax_ratings.user=totalratings.userid 
     ORDER BY    total DESC LIMIT 10;
+
+SELECT COUNT(*), AVG(rating) FROM user_item_ratings WHERE movieid=470 AND userid=276;
+
+SELECT AVG(rating) FROM kudu_user_ratings WHERE movietitle='Tombstone (1993)';
 ```
 
 ## Particionado HASH
@@ -174,6 +182,10 @@ NO SE PUEDEN CREAR BUCKETS A POSTERIORI.
 El rango se especifica durante la creación de la tabla y se mapea con uno o varios valores de la clave primaria.
 Es posible añadir o borrar nuevas particiones con un ALTER TABLE.
 
-## Particionando por TIME RANGE
+### Particionando por TIME RANGE
 
-Se usa un campo con fecha para ir haciendo particiones por día o rango de fechas.
+El uso más común de una partición range es usar un campo con fecha para ir haciendo particiones por día o rango de fechas.
+
+## Partición combinada
+
+Se puede combinar la partición de Hash y rango por tiempo para tener una matriz de particiones.
