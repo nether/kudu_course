@@ -24,6 +24,8 @@ Establecer variable de entorno en CMD => `set KUDU_QUICKSTART_IP=10.144.10.153`
 `docker exec -it kudu-impala impala-shell`
 Si el comando anterior nos deja la consola desconectada hay que ejecutar el commando `connect;`
 
+Copiar ficheros al docker: `docker cp C:\GIT\Utils\cursoApacheKudu\user_ratings.txt f5273b3d3531:/tmp/user_ratings.txt`
+
 Comando para ver las Bases de Datos: `show databases;`
 Comando para ver las tablas en la BBDD: `show tables;`
 
@@ -89,3 +91,89 @@ describe primeratabla;
 ```SQL
 drop table primeratabla;
 ```
+
+### Creación de una table en Impala con datos de un fichero
+
+```SQL
+DROP TABLE IF EXISTS user_item_ratings;
+DROP TABLE IF EXISTS kudu_user_ratings;
+DROP TABLE IF EXISTS kudu_user_ratings_as_select;
+
+CREATE EXTERNAL TABLE user_item_ratings
+(
+ts INT,
+userid INT,
+movieid INT,
+rating INT,
+age INT,
+gender STRING,
+occupation STRING,
+zip INT,
+movietitle STRING,
+releasedate STRING,
+videoreleasedate STRING,
+url STRING
+)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\001' STORED AS TEXTFILE LOCATION '/tmp/users/';
+```
+
+### Creación de una tabla en Kudu
+
+Se crea usando una PrimeryKey de 2 campos y un hash de un solo campo (el campo del hash debe ser uno de los del primaryKey)
+
+```SQL
+CREATE TABLE kudu_user_ratings (
+    movieid INT,
+    userid INT,
+    rating INT,
+    age INT,
+    gender STRING,
+    occupation STRING,
+    zip INT,
+    movietitle STRING,
+    releasedate STRING,
+    videoreleasedate STRING,
+    url STRING,
+    ts INT,
+    PRIMARY KEY(movieid,userid)    
+)
+PARTITION BY HASH(movieid)
+PARTITIONS 4 STORED AS KUDU;
+
+INSERT INTO kudu_user_ratings SELECT movieid, userid, rating, age,gender, occupation, zip, movietitle, releasedate, videoreleasedate, url, ts FROM user_item_ratings;
+
+CREATE TABLE kudu_user_ratings_as_select PRIMARY KEY(movieid,userid) PARTITION BY HASH(movieid) PARTITIONS 4 STORED AS KUDU AS SELECT movieid, userid, rating, age, gender, occupation, zip, movietitle, releasedate, videoreleasedate, url, ts  FROM user_item_ratings;
+
+SELECT userid, minimum_rating, maximum_rating, total 
+FROM (    
+    SELECT userid AS user, 
+            MIN(rating) AS minimum_rating,        
+            MAX(rating) as maximum_rating    
+    FROM        user_item_ratings    
+    GROUP BY        userid    
+    ) AS minmax_ratings 
+    JOIN (    
+        SELECT  userid,
+                count(*) AS total    
+        FROM        user_item_ratings    
+        GROUP BY        userid    ) AS totalratings 
+    ON    minmax_ratings.user=totalratings.userid 
+    ORDER BY    total DESC LIMIT 10;
+```
+
+## Particionado HASH
+
+Particionado HASH -> Módulo del número de particiones
+Número fijo de Buckets
+Se distribuye todo el contenido de forma equitativa entre buckets
+Las lecturas se paralelizan entre las particiones (a no ser que se pueda saber directamente cual de ellas contiene el dato)
+NO SE PUEDEN CREAR BUCKETS A POSTERIORI.
+
+## Particionado RANGE
+
+El rango se especifica durante la creación de la tabla y se mapea con uno o varios valores de la clave primaria.
+Es posible añadir o borrar nuevas particiones con un ALTER TABLE.
+
+## Particionando por TIME RANGE
+
+Se usa un campo con fecha para ir haciendo particiones por día o rango de fechas.
