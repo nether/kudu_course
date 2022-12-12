@@ -6,7 +6,8 @@
 
 ## Documentación
 
-Databricks: <https://drive.google.com/file/d/1H2Wj15fSHZ5h8PxJz97j7T5UzUuJhoZy/view>
+Instalación Kudu: <https://drive.google.com/open?id=1qeMtGb2MUqzfshY_i-2mhu46FFrf3krC&authuser=1>
+Instalación Databricks: <https://drive.google.com/file/d/1H2Wj15fSHZ5h8PxJz97j7T5UzUuJhoZy/view>
 
 Apache Kudu: <https://drive.google.com/file/d/1WgXo6BxfKlhbBRiGdQP8V98mpNhx7FXk/view>
 
