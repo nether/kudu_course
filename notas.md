@@ -216,7 +216,7 @@ TBLPROPERTIES('kudu.table_name' = 'tabla-python');
 
 Para entrar en modo pegado `:paste` (CTRL-D para finalizarlo)
 
-```python
+```scala
 val sfmta_raw = spark.sqlContext.read.format("csv")
   .option("header", "true")
   .option("inferSchema", "true")
@@ -254,4 +254,24 @@ spark.sql("SELECT count(*) FROM sftmta_prep").show()
 spark.sql("SELECT * FROM sftmta_prep LIMIT 5").show()
 
 
+```
+
+Y tambien el siguiente código para crear la tabla en KUDU:
+
+```scala
+import collection.JavaConverters._
+import org.apache.kudu.client._
+import org.apache.kudu.spark.kudu._
+val kuduContext = new KuduContext("localhost:7051,localhost:7151,localhost:7251", spark.sparkContext)
+
+// Delete the table if it already exists.
+if(kuduContext.tableExists("sfmta_kudu")) {
+  kuduContext.deleteTable("sfmta_kudu")
+}
+
+kuduContext.createTable("sfmta_kudu", sftmta_prep.schema,
+  /* primary key */ Seq("REPORT_TIME", "VEHICLE_TAG"),
+  new CreateTableOptions()
+    .setNumReplicas(3)
+    .addHashPartitions(List("VEHICLE_TAG").asJava, 4))
 ```
