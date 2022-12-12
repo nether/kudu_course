@@ -276,3 +276,10 @@ kuduContext.createTable("sfmta_kudu", sftmta_prep.schema,
     .setNumReplicas(3)
     .addHashPartitions(List("VEHICLE_TAG").asJava, 4))
 ```
+
+### Configuración de Spark con Kudu y Kafka
+
+Para usar Kudu, Kafka en Spark hay que poner la siguiente línea en el archivo `.\conf\spark-defaults.conf`
+
+`spark.jars.packages					  org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1,org.apache.spark:spark-streaming-kafka-0-10_2.12:3.3.1,org.apache.kudu:kudu-spark3_2.12:1.16.0`
+
