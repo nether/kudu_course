@@ -221,7 +221,7 @@ Para entrar en modo pegado `:paste` (CTRL-D para finalizarlo)
 val sfmta_raw = spark.sqlContext.read.format("csv")
   .option("header", "true")
   .option("inferSchema", "true")
-  .load("avl.csv")
+  .load(".\data\avl.csv")
 
 sfmta_raw.printSchema
 
